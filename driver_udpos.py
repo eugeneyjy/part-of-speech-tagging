@@ -7,14 +7,28 @@ import string
 from collections import Counter
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, pad_sequence
 from nltk.tokenize import word_tokenize
+import random
+import logging
+
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+random.seed(42)
+torch.manual_seed(42)
+
+dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
 
 def main():
     udpos_train = UDPOSTags(split="train")
     batch_size = 1
     udpos_train_loader = DataLoader(udpos_train, batch_size=batch_size, shuffle=True, collate_fn=pad_collate)
 
-class Vocabulary:
 
+class Vocabulary:
     def __init__(self, corpus):
         self.word2idx, self.idx2word, self.freq = self.build_vocab(corpus)
         self.size = len(self.word2idx)
@@ -90,6 +104,15 @@ class UDPOSTags(Dataset):
         numeralized_tags = self.tag_vocab.text2idx(self.tags_data[idx])
         return torch.tensor(numeralized_text), torch.tensor(numeralized_tags)
 
+
+class PosBiLSTM(torch.nn.Module):
+    def __init__(self, input_size, output_size, hidden_dim=64):
+        super.__init__()
+    
+    def forward(x, s):
+        return output
+
+
 def pad_collate(batch):
     (xx, yy) = zip(*batch)
     x_lens = [len(x) for x in xx]
@@ -97,6 +120,33 @@ def pad_collate(batch):
     xx_pad = pad_sequence(xx, batch_first=True, padding_value=0)
     yy_pad = pad_sequence(yy, batch_first=True, padding_value=0)
     return xx_pad, yy_pad, x_lens
+
+
+def train_model(model, train_loader, epochs=2000, lr=0.003):
+    crit = torch.nn.CrossEntropyLoss()
+    parameters = filter(lambda p: p.requires_grad, model.parameters())
+    optimizer = torch.optim.Adam(parameters, lr=lr, weight_decay=0.00001)
+
+    for i in range(epochs):
+        for j, (x, y, l) in enumerate(train_loader):
+            x = x.to(dev)
+            y = y.to(dev)
+
+            y_pred = model(x, l)
+
+            loss = crit(y_pred, y)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            pred = torch.max(y_pred, 1)[1]
+            correct += (pred == y).float().sum()
+            sum_loss += loss.item()*y.shape[0]
+            total += y.shape[0]
+            if i % 10 == 0:
+                logging.info("epoch %d train loss %.3f, train acc %.3f" % (i, sum_loss/total, correct/total))
+
 
 if __name__ == "__main__":
     main()
