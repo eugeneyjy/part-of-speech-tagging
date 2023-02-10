@@ -1,0 +1,3 @@
+.data
+.vector_cache
+best_model.pt
