@@ -1,32 +1,71 @@
+# Basic Python imports
+import random
+import pickle
+import os
+
+# Imports from Pytorch
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torchtext import data
 from torchtext import datasets
-from collections import Counter
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, pad_sequence
-import torch.nn as nn
-import torch.nn.functional as F
+
+# Imports from NLTK
 from nltk.tokenize import word_tokenize
-import random
-import logging
-import gensim.downloader
-from tqdm import tqdm
-from os import path
+
+# Imports for plotting
 import matplotlib.pyplot as plt
 
-
+# Imports for logging and display progress
+import logging
+from tqdm import tqdm
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.INFO,
     datefmt='%Y-%m-%d %H:%M:%S')
 
+# Specify random seed to allow reproducible results
 random.seed(42)
 torch.manual_seed(42)
 
+# Utilize GPU if available
 dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
+
+# Specify the directory which saved model live
+model_dir = os.getcwd() + "/model"
+
+def main():
+    train_data = UDPOSTags("train")
+    val_data = UDPOSTags("val", train_data.text_field, train_data.tag_field)
+    test_data = UDPOSTags("test", train_data.text_field, train_data.tag_field)
+    batch_size = 256
+
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, collate_fn=pad_collate)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, collate_fn=pad_collate)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, collate_fn=pad_collate)
+
+    embeddings = train_data.text_field.vocab.vectors
+    text_pad_idx = train_data.text_field.vocab.stoi[train_data.text_field.pad_token]
+    tag_pad_idx = train_data.tag_field.vocab.stoi[train_data.tag_field.pad_token]
+
+    model = PosBiLSTM(len(train_data.tag_field.vocab), embeddings, text_pad_idx)
+    model.to(dev)
+    best_model = torch.load(f"{model_dir}/best_model.pt") if os.path.exists(f"{model_dir}/best_model.pt") else None
+    # best_model = None
+    if best_model:
+        best_model.to(dev)
+    best_model_loss, _ = validation_metrics(best_model, val_loader) if best_model else (float('inf'), -1)
+    logging.info("Best Model Loss %.3f" %(best_model_loss))
+    _, test_acc = validation_metrics(best_model, test_loader) if best_model else (None, None)
+    print(test_acc)
+    plots = train_model(model, best_model_loss, train_loader, val_loader, tag_pad_idx, epochs=30, lr=0.0003)
+    plot_loss(plots)
+
+
 class UDPOSTags(Dataset):
-    def __init__(self, split="train", text_vocab=None, tag_vocab=None):
+    def __init__(self, split="train", text_field=None, tag_field=None):
         TEXT = data.Field(lower=True)
         UD_TAGS = data.Field(unk_token=None)
         fields = (("text", TEXT), ("udtags", UD_TAGS))
@@ -39,56 +78,26 @@ class UDPOSTags(Dataset):
             self.lang_data = test_data
 
         self.text_data = [vars(e)["text"] for e in self.lang_data.examples]
-        self.tags_data = [vars(e)["udtags"] for e in self.lang_data.examples]
+        self.tag_data = [vars(e)["udtags"] for e in self.lang_data.examples]
 
-        if text_vocab:
-            self.text_vocab = text_vocab
+        if text_field:
+            self.text_field = text_field
         else:
             TEXT.build_vocab(self.lang_data, min_freq=2, vectors="glove.6B.300d", unk_init=torch.Tensor.normal_)
-            self.text_vocab = TEXT
-        if tag_vocab:
-            self.tag_vocab = tag_vocab
+            self.text_field = TEXT
+        if tag_field:
+            self.tag_field = tag_field
         else:
             UD_TAGS.build_vocab(self.lang_data)
-            self.tag_vocab = UD_TAGS
+            self.tag_field = UD_TAGS
 
     def __len__(self):
-        return len(self.tags_data)
+        return len(self.tag_data)
 
     def __getitem__(self, idx):
-        numeralized_text = [self.text_vocab.vocab.stoi[t] for t in self.text_data[idx]]
-        numeralized_tags = [self.tag_vocab.vocab.stoi[t] for t in self.tags_data[idx]]
+        numeralized_text = [self.text_field.vocab.stoi[t] for t in self.text_data[idx]]
+        numeralized_tags = [self.tag_field.vocab.stoi[t] for t in self.tag_data[idx]]
         return torch.tensor(numeralized_text), torch.tensor(numeralized_tags)
-
-
-train_data = UDPOSTags("train")
-val_data = UDPOSTags("val", train_data.text_vocab, train_data.tag_vocab)
-test_data = UDPOSTags("test", train_data.text_vocab, train_data.tag_vocab)
-batch_size = 256
-
-def main():
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, collate_fn=pad_collate)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, collate_fn=pad_collate)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, collate_fn=pad_collate)
-
-    embeddings = train_data.text_vocab.vocab.vectors
-    text_pad_idx = train_data.text_vocab.vocab.stoi[train_data.text_vocab.pad_token]
-    tag_pad_idx = train_data.tag_vocab.vocab.stoi[train_data.tag_vocab.pad_token]
-
-    model = PosBiLSTM(len(train_data.tag_vocab.vocab), embeddings, text_pad_idx)
-    model.to(dev)
-    best_model = torch.load("best_model.pt") if path.exists("best_model.pt") else None
-    if best_model:
-        best_model.to(dev)
-    # _, best_model_acc = validation_metrics(best_model, val_loader) if best_model else (None, None)
-    # _, test_acc = validation_metrics(best_model, test_loader) if best_model else (None, None)
-    # print(test_acc)
-    print(tag_sentence("The old man the boat.", best_model))
-    print(tag_sentence("The complex houses married and single soldiers and their families.", best_model))
-    print(tag_sentence("The man who hunts ducks out on weekends.", best_model))
-    # plots = train_model(model, best_model_acc, train_loader, val_loader, tag_pad_idx, epochs=30)
-    # plot_loss(plots)
-
 
 
 class WordEncoder(torch.nn.Module):
@@ -101,12 +110,13 @@ class WordEncoder(torch.nn.Module):
 
 
 class PosClassifier(torch.nn.Module):
-    def __init__(self, insize, outsize):
+    def __init__(self, insize, outsize, dropout):
         super().__init__()
         self.linear = nn.Linear(insize, outsize)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        output = self.linear(x)
+        output = self.linear(self.dropout(x))
         return output
 
 
@@ -115,7 +125,7 @@ class PosBiLSTM(torch.nn.Module):
         super().__init__()
         self.embed = WordEncoder(embeddings, pad_idx)
         self.bi_lstm = nn.LSTM(embeddings.shape[1], hidden_dim//2, 2, batch_first=True, bidirectional=True, dropout=dropout)
-        self.classifier = PosClassifier(hidden_dim, outsize)
+        self.classifier = PosClassifier(hidden_dim, outsize, dropout)
         self.apply(self._init_weights)
 
     def _init_weights(self, module):
@@ -155,11 +165,11 @@ def calc_correct(y, y_pred):
     return correct, y.shape[0]
 
 
-def train_model(model, best_model_acc, train_loader, val_loader, tag_pad_idx, epochs=2000, lr=0.003):
+def train_model(model, best_model_loss, train_loader, val_loader, tag_pad_idx, epochs=2000, lr=0.003):
     crit = torch.nn.CrossEntropyLoss(ignore_index=tag_pad_idx)
     parameters = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = torch.optim.Adam(parameters, lr=lr, weight_decay=0.00001)
-    best_val_acc = 0
+    optimizer = torch.optim.Adam(parameters, lr=lr, amsgrad=True)
+    best_val_loss = float('inf')
     plots = {'train':[], 'val':[]}
     for i in range(epochs):
         model.train()
@@ -188,13 +198,15 @@ def train_model(model, best_model_acc, train_loader, val_loader, tag_pad_idx, ep
 
 
         val_loss, val_acc = validation_metrics(model, val_loader)
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            if best_model_acc:
-                if best_val_acc > best_model_acc:
-                    torch.save(model, "best_model.pt")
+        if val_loss <= best_val_loss:
+            best_val_loss = val_loss
+            if best_model_loss:
+                if best_val_loss <= best_model_loss:
+                    logging.info("saving best val loss %.3f, best model loss %.3f" %(best_val_loss, best_model_loss))
+                    save_model(model, train_loader.dataset.text_field, train_loader.dataset.tag_field)
             else:
-                torch.save(model, "best_model.pt")
+                logging.info("saving best val loss %.3f" %(best_val_loss))
+                save_model(model, train_loader.dataset.text_field, train_loader.dataset.tag_field)
         logging.info("epoch %d train loss %.3f, train acc %.3f, val loss %.3f, val acc %.3f" % 
                     (i, sum_loss/total, correct/total, val_loss, val_acc))
         plots['train'].append((i, sum_loss/total, correct/total))
@@ -239,14 +251,31 @@ def plot_loss(plots):
     plt.show()
 
 
-def tag_sentence(sentence, model):
+def save_model(model, 
+               text_field, 
+               tag_field, 
+               model_path='best_model.pt', 
+               text_field_path='best_text_field.pkl', 
+               tag_field_path='best_tag_field.pkl'):
+    try:
+        os.mkdir(model_dir)
+    except OSError as error:
+        pass
+    text_field_out = open(f"{model_dir}/{text_field_path}", 'wb')
+    tag_field_out = open(f"{model_dir}/{tag_field_path}", 'wb')
+    pickle.dump(f"{model_dir}/{text_field}", text_field_out)
+    pickle.dump(f"{model_dir}/{tag_field}", tag_field_out)
+    torch.save(model, f"{model_dir}/{model_path}")
+
+
+def tag_sentence(sentence, model, text_field, tag_field):
     tokens = word_tokenize(sentence.lower())
-    tokens = torch.Tensor([[train_data.text_vocab.vocab.stoi[token] for token in tokens]]).long()
+    tokens_torch = torch.Tensor([[text_field.vocab.stoi[token] for token in tokens]]).long()
 
     model.eval()
-    tags = model(tokens.cuda(), [len(tokens[0])])
-    tags = [train_data.tag_vocab.vocab.itos[tag] for tag in torch.argmax(tags,2)[0]]
-    return tags
+    tags = model(tokens_torch.cuda(), [len(tokens_torch[0])])
+    tags = [tag_field.vocab.itos[tag] for tag in torch.argmax(tags,2)[0]]
+    return (tokens, tags)
 
 
 if __name__ == "__main__":
