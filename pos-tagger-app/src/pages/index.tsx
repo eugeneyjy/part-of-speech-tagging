@@ -1,10 +1,14 @@
-import React, { Component, ReactElement } from 'react';
+import React, { FC, ReactElement } from 'react';
 import Head from 'next/head';
 import styled from 'styled-components';
 import { tagColors } from '@/styles/color-theme';
 
-interface tagSpan {
+interface TagSpan {
   name: string
+}
+
+interface DefProps {
+  TagClickHandler: (event: React.MouseEvent<HTMLSpanElement>) => void
 }
 
 const Home = () => {
@@ -17,6 +21,25 @@ const Home = () => {
     let validatedName: string = typeof name === 'string' ?  name : '';
     setTagName(validatedName);
   };
+
+  const tagMap = new Map<string, ReactElement>();
+  tagMap.set('Adjective', <AdjDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Adposition', <AdpDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Adverb', <AdvDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Auxillary', <AuxDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Coordinating conjunction', <CconjDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Determiner', <DetDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Interjection', <IntjDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Noun', <NounDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Numeral', <NumDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Particle', <PartDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Pronoun', <PronDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Proper noun', <PropnDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Punctuation', <PunctDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Subordinating conjunction', <SconjDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Symbol', <SymDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Verb', <VerbDef TagClickHandler={switchDefinition}/>);
+  tagMap.set('Other', <XDef TagClickHandler={switchDefinition}/>);
 
   return (
     <>
@@ -116,7 +139,7 @@ const TagsContainer = styled.div`
   padding: 20px 0;
 `;
 
-const Tag = styled.span<tagSpan>`
+const Tag = styled.span<TagSpan>`
   font-family: 'Bitter';
   padding: 3px 10px;
   background-color: ${props => tagColors[props.name]};
@@ -143,7 +166,7 @@ const introText = `This a Part-of-speech (POS) tagger trained using Bi-LSTM mode
 Enter sentences right in here and they will be color coded with their respective POS tag in real time. \
 Check below for the definition of each tags.`;
 
-const AdjDef = () => {
+const AdjDef: FC<DefProps> = (props) => {
   const name = 'adj';
   return(
     <Definition>
@@ -152,13 +175,13 @@ const AdjDef = () => {
       They may also function as predicates, as in:<br/>
       The car is <Tag name={name}>green</Tag>.<br/>
       Some words that could be seen as adjectives (and are tagged as such in other annotation schemes) have a different tag in Universal Dependencies (UD): 
-      See Determiner and Numeral.<br/>
+      See <Tag name='det' onClick={props.TagClickHandler}>Determiner</Tag> and <Tag name='num' onClick={props.TagClickHandler}>Numeral</Tag>.<br/>
       Adjective is also used for “proper adjectives” such as European (“proper” as in proper nouns, i.e., words that are derived from names but are adjectives rather than nouns).<br/>
   </Definition>
   );
 };
 
-const AdpDef = () => {
+const AdpDef: FC<DefProps> = (props) => {
   return(
     <Definition>
       Adposition is a cover term for prepositions and postpositions. 
@@ -173,7 +196,7 @@ const AdpDef = () => {
   );
 };
 
-const AdvDef = () => {
+const AdvDef: FC<DefProps> = (props) => {
   return(
     <Definition>
       Adverbs are words that typically modify verbs for such categories as time, place, direction or manner. 
@@ -186,7 +209,7 @@ const AdvDef = () => {
   );
 };
 
-const AuxDef = () => {
+const AuxDef: FC<DefProps> = (props) => {
   return(
     <Definition>
       An auxiliary is a function word that accompanies the lexical verb of a verb phrase and expresses grammatical distinctions not 
@@ -204,7 +227,7 @@ const AuxDef = () => {
   );
 };
 
-const CconjDef = () => {
+const CconjDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       A coordinating conjunction is a word that links words or larger constituents without syntactically 
@@ -215,7 +238,7 @@ const CconjDef = () => {
   );
 };
 
-const DetDef = () => {
+const DetDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       Determiners are words that modify nouns or noun phrases and express the reference of the noun phrase in context. 
@@ -246,7 +269,7 @@ const DetDef = () => {
   );
 };
 
-const IntjDef = () => {
+const IntjDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       A coordinating conjunction is a word that links words or larger constituents without syntactically 
@@ -257,7 +280,7 @@ const IntjDef = () => {
   );
 };
 
-const NounDef = () => {
+const NounDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       Nouns are a part of speech typically denoting a person, place, thing, animal or idea.<br/>
@@ -270,7 +293,7 @@ const NounDef = () => {
   );
 };
 
-const NumDef = () => {
+const NumDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       A numeral is a word, functioning most typically as a determiner, adjective or pronoun, 
@@ -292,7 +315,7 @@ const NumDef = () => {
   );
 };
 
-const PartDef = () => {
+const PartDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       Particles are function words that must be associated with another word or phrase to impart meaning and 
@@ -311,7 +334,7 @@ const PartDef = () => {
   );
 };
 
-const PronDef = () => {
+const PronDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       Pronouns are words that substitute for nouns or noun phrases, whose meaning is recoverable from the linguistic or extralinguistic context.<br/>
@@ -326,7 +349,7 @@ const PronDef = () => {
   );
 };
 
-const PropnDef = () => {
+const PropnDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       A proper noun is a noun (or nominal content word) that is the name (or part of the name) of a specific individual, place, or object.<br/>
@@ -347,7 +370,7 @@ const PropnDef = () => {
   );
 };
 
-const PunctDef = () => {
+const PunctDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       Punctuation marks are non-alphabetical characters and character groups used in many languages to delimit linguistic units in printed text.<br/>
@@ -362,7 +385,7 @@ const PunctDef = () => {
   );
 };
 
-const SconjDef = () => {
+const SconjDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       A subordinating conjunction is a conjunction that links constructions by making one of them a constituent of the other. 
@@ -371,7 +394,7 @@ const SconjDef = () => {
   );
 };
 
-const SymDef = () => {
+const SymDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       A symbol is a word-like entity that differs from ordinary words by form, function, or both.<br/>
@@ -387,7 +410,7 @@ const SymDef = () => {
   );
 };
 
-const VerbDef = () => {
+const VerbDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       A verb is a member of the syntactic class of words that typically signal events and actions, 
@@ -402,7 +425,7 @@ const VerbDef = () => {
   );
 };
 
-const XDef = () => {
+const XDef: FC<DefProps> = (props) => {
   return (
     <Definition>
       The tag X is used for words that for some reason cannot be assigned a real part-of-speech category. It should be used very restrictively.<br/>
@@ -414,25 +437,6 @@ const XDef = () => {
     </Definition>
   );
 };
-
-const tagMap = new Map<string, ReactElement>();
-tagMap.set('Adjective', <AdjDef/>);
-tagMap.set('Adposition', <AdpDef/>);
-tagMap.set('Adverb', <AdvDef/>);
-tagMap.set('Auxillary', <AuxDef/>);
-tagMap.set('Coordinating conjunction', <CconjDef/>);
-tagMap.set('Determiner', <DetDef/>);
-tagMap.set('Interjection', <IntjDef/>);
-tagMap.set('Noun', <NounDef/>);
-tagMap.set('Numeral', <NumDef/>);
-tagMap.set('Particle', <PartDef/>);
-tagMap.set('Pronoun', <PronDef/>);
-tagMap.set('Proper noun', <PropnDef/>);
-tagMap.set('Punctuation', <PunctDef/>);
-tagMap.set('Subordinating conjunction', <SconjDef/>);
-tagMap.set('Symbol', <SymDef/>);
-tagMap.set('Verb', <VerbDef/>);
-tagMap.set('Other', <XDef/>);
 
 
 export default Home;
