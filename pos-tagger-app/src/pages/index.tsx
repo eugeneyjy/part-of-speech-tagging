@@ -1,7 +1,19 @@
+import React, { Component, ReactElement } from 'react';
 import Head from 'next/head'
 import styled from 'styled-components'
 
+
 const Home = () => {
+  const [tagName, setTagName] = React.useState<string>('Adjective');
+
+  const switchDefinition = (event: React.MouseEvent<HTMLSpanElement>) => {
+    event.preventDefault();
+    const target = event.currentTarget;
+    const name = target.textContent;
+    let validatedName: string = typeof name === 'string' ?  name : '';
+    setTagName(validatedName);
+  };
+
   return (
     <>
       <Head>
@@ -14,13 +26,42 @@ const Home = () => {
         <Title>
             Part-Of-Speech Tagger
         </Title>
-        <TagContainer>
-        <TextInput/>
-        </TagContainer>
+        <ContentContainer>
+          <TextInput defaultValue={introText}/>
+          <InfoContainer>
+            <TagsContainer>
+              <Tag onClick={switchDefinition}>Adjective</Tag>
+              <Tag onClick={switchDefinition}>Adposition</Tag>
+              <Tag onClick={switchDefinition}>Adverb</Tag>
+              <Tag onClick={switchDefinition}>Auxillary</Tag>
+              <Tag onClick={switchDefinition}>Coordinating conjunction</Tag>
+              <Tag onClick={switchDefinition}>Determiner</Tag>
+              <Tag onClick={switchDefinition}>Interjection</Tag>
+              <Tag onClick={switchDefinition}>Noun</Tag>
+              <Tag onClick={switchDefinition}>Numeral</Tag>
+              <Tag onClick={switchDefinition}>Particle</Tag>
+              <Tag onClick={switchDefinition}>Pronoun</Tag>
+              <Tag onClick={switchDefinition}>Proper noun</Tag>
+              <Tag onClick={switchDefinition}>Punctuation</Tag>
+              <Tag onClick={switchDefinition}>Subordinating conjunction</Tag>
+              <Tag onClick={switchDefinition}>Symbol</Tag>
+              <Tag onClick={switchDefinition}>Verb</Tag>
+              <Tag onClick={switchDefinition}>Other</Tag>
+            </TagsContainer>
+            <DefinitionContainer>
+              <DefinitionTitle>
+                {tagName}
+              </DefinitionTitle>
+              <>
+              {tagMap.get(tagName)}
+              </>
+            </DefinitionContainer>
+          </InfoContainer>
+        </ContentContainer>
       </MainContainer>
     </>
-  )
-}
+  );
+};
 
 const MainContainer = styled.main`
   display: flex;
@@ -31,30 +72,361 @@ const MainContainer = styled.main`
   height: 100vh;
   width: 100vw;
   background-color: white;
-`
+`;
 
 const Title = styled.div`
   font-family: 'Bitter';
   font-size: 2em;
   padding: 36px 0;
-`
+`;
 
-const TagContainer = styled.div`
+const ContentContainer = styled.div`
   display: flex;
+  flex-direction: column;
   width: 45%;
-  height: 35%;
-`
+  height: 100%;
+`;
 
 const TextInput = styled.textarea`
   font-family: 'Open Sans';
   font-size: 1em;
   width: 100%;
-  min-width: 100%;
-  height: 100%;
-  min-height: 60%;
-  max-height: 100%;
+  height: 40%;
+  min-height: 250px;
   padding: 20px;
   line-height: 1.6;
-`
+  resize: none;
+`;
+
+const InfoContainer = styled.div`
+  width: 100%;
+  height: 100%;
+`;
+
+const TagsContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  padding: 20px 0;
+`;
+
+const Tag = styled.span`
+  font-family: 'Bitter';
+  padding: 3px 10px;
+  background-color: red;
+  height: fit-content;
+  cursor: pointer;
+`;
+
+const DefinitionContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const DefinitionTitle = styled.div`
+  font-family: 'Bitter';
+  font-size: 1.5em;
+`;
+
+const Definition = styled.div`
+  white-space: pre-line;
+`;
+
+const introText = `This a Part-of-speech (POS) tagger trained using Bi-LSTM model. \
+Enter sentences right in here and they will be color coded with their respective POS tag in real time. \
+Check below for the definition of each tags.`;
+
+const AdjDef = () => {
+  return(
+    <Definition>
+      Adjectives are words that typically modify nouns and specify their properties or attributes:<br/>
+      The <Tag>oldest</Tag> French bridge<br/>
+      They may also function as predicates, as in:<br/>
+      The car is <Tag>green</Tag>.<br/>
+      Some words that could be seen as adjectives (and are tagged as such in other annotation schemes) have a different tag in Universal Dependencies (UD): 
+      See Determiner and Numeral.<br/>
+      Adjective is also used for “proper adjectives” such as European (“proper” as in proper nouns, i.e., words that are derived from names but are adjectives rather than nouns).<br/>
+  </Definition>
+  );
+};
+
+const AdpDef = () => {
+  return(
+    <Definition>
+      Adposition is a cover term for prepositions and postpositions. 
+      Adpositions belong to a closed set of items that occur before (preposition) or after (postposition) a complement composed of a noun phrase, 
+      noun, pronoun, or clause that functions as a noun phrase, and that form a single structure with the complement to express its grammatical 
+      and semantic relation to another unit within a clause.<br/>
+
+      In many languages, adpositions can take the form of fixed multiword expressions, such as in spite of, because of, thanks to. 
+      The component words are then still tagged according to their basic use (in is ADP, spite is NOUN, etc.) and their status 
+      as multiword expressions are accounted for in the syntactic annotation.
+    </Definition>
+  );
+};
+
+const AdvDef = () => {
+  return(
+    <Definition>
+      Adverbs are words that typically modify verbs for such categories as time, place, direction or manner. 
+      They may also modify adjectives and other adverbs, as in very briefly or arguably wrong.<br/>
+
+      There is a closed subclass of pronominal adverbs that refer to circumstances in context, rather than naming them directly; 
+      similarly to pronouns, these can be categorized as interrogative, relative, demonstrative etc. 
+      Pronominal adverbs also get the ADV part-of-speech tag but they are differentiated by additional features.
+    </Definition>
+  );
+};
+
+const AuxDef = () => {
+  return(
+    <Definition>
+      An auxiliary is a function word that accompanies the lexical verb of a verb phrase and expresses grammatical distinctions not 
+      carried by the lexical verb, such as person, number, tense, mood, aspect, voice or evidentiality. It is often a verb 
+      (which may have non-auxiliary uses as well) but many languages have nonverbal TAME markers and these should also be tagged AUX. 
+      The class AUX also include copulas (in the narrow sense of pure linking words for nonverbal predication).<br/>
+
+      Modal verbs may count as auxiliaries in some languages (English). 
+      In other languages their behavior is not too different from the main verbs and they are thus tagged VERB.<br/>
+
+      Note that not all languages have grammaticalized auxiliaries, and even where they exist the dividing line between 
+      full verbs and auxiliaries can be expected to vary between languages. 
+      Exactly which words are counted as AUX should be part of the language-specific documentation.
+    </Definition>
+  );
+};
+
+const CconjDef = () => {
+  return (
+    <Definition>
+      A coordinating conjunction is a word that links words or larger constituents without syntactically 
+      subordinating one to the other and expresses a semantic relationship between them. <br/>
+
+      For subordinating conjunctions, see SCONJ.
+    </Definition>
+  );
+};
+
+const DetDef = () => {
+  return (
+    <Definition>
+      Determiners are words that modify nouns or noun phrases and express the reference of the noun phrase in context. 
+      That is, a determiner may indicate whether the noun is referring to a definite or indefinite element of a class, 
+      to a closer or more distant element, to an element belonging to a specified person or thing, to a particular number or quantity, etc.<br/>
+
+      Determiners under this definition include both articles and pro-adjectives (pronominal adjectives), 
+      which is a slightly broader sense than what is usually regarded as determiners in English. In particular, 
+      there is no general requirement that a nominal can be modified by at most one determiner, 
+      although some languages may show a strong tendency towards such a constraint. (For example, 
+      an English nominal usually allows only one DET modifier, but there are occasional cases of addeterminers, 
+      which appear outside the usual determiner, such as [en] all in all the children survived. In such cases, both all and the are given the POS DET.)<br/>
+
+      Note that the DET tag includes (pronominal) quantifiers (words like many, few, several), 
+      which are included among determiners in some languages but may belong to numerals in others. 
+      However, cardinal numerals in the narrow sense (one, five, hundred) are not tagged DET even though some 
+      authors would include them in quantifiers. Cardinal numbers have their own tag NUM.<br/>
+
+      Also note that the notion of determiners is unknown in traditional grammar of some languages (e.g. Czech); 
+      words equivalent to English determiners may be traditionally classified as pronouns and/or numerals in these languages. 
+      In order to annotate the same thing the same way across languages, the words satisfying our definition of determiners should be tagged DET in these languages as well.<br/>
+
+      It is not always crystal clear where pronouns end and determiners start. 
+      Unlike in UD v1 it is no longer required that they are told apart solely on the base of the context. 
+      The words can be pre-classified in the dictionary as either PRON or DET, based on their typical syntactic distribution 
+      (and morphology, when applicable). Language-specific documentation should list all determiners (it is a closed class) and point out ambiguities, if any.
+    </Definition>
+  );
+};
+
+const IntjDef = () => {
+  return (
+    <Definition>
+      A coordinating conjunction is a word that links words or larger constituents without syntactically 
+      subordinating one to the other and expresses a semantic relationship between them. <br/>
+
+      For subordinating conjunctions, see SCONJ.
+    </Definition>
+  );
+};
+
+const NounDef = () => {
+  return (
+    <Definition>
+      Nouns are a part of speech typically denoting a person, place, thing, animal or idea.<br/>
+
+      The NOUN tag is intended for common nouns only. See PROPN for proper nouns and PRON for pronouns.<br/>
+
+      Note that some verb forms such as gerunds and infinitives may share properties and usage of nouns and verbs. 
+      Depending on language and context, they may be classified as either VERB or NOUN.
+    </Definition>
+  );
+};
+
+const NumDef = () => {
+  return (
+    <Definition>
+      A numeral is a word, functioning most typically as a determiner, adjective or pronoun, 
+      that expresses a number and a relation to the number, such as quantity, sequence, frequency or fraction.<br/>
+
+      Note that cardinal numerals are covered by NUM whether they are used as determiners or not (as in Windows Seven) 
+      and whether they are expressed as words (four), digits (4) or Roman numerals (IV). Other words functioning as determiners 
+      (including quantifiers such as many and few) are tagged DET.<br/>
+
+      Note that there are words that may be traditionally called numerals in some languages (e.g. Czech) but which are not tagged NUM. 
+      Such non-cardinal numerals belong to other parts of speech in our universal tagging scheme, based mainly on syntactic criteria: 
+      ordinal numerals are adjectives (first, second, third) or adverbs ([cs] poprvé “for the first time”), multiplicative numerals are adverbs (once, twice) etc.<br/>
+
+      Word tokens consisting of digits and (optionally) punctuation characters are generally considered cardinal numbers and tagged as NUM. 
+      This includes numeric date/time formats (11:00) and phone numbers. Words mixing digits and alphabetic characters should, however, ordinarily be excluded. 
+      In English, for example, pluralized numbers (the 1970s, the seventies) are treated as plural NOUNs, 
+      while mixed alphanumeric street addresses (221B) and product names (130XE) are PROPN.
+    </Definition>
+  );
+};
+
+const PartDef = () => {
+  return (
+    <Definition>
+      Particles are function words that must be associated with another word or phrase to impart meaning and 
+      that do not satisfy definitions of other universal parts of speech (e.g. adpositions, coordinating conjunctions, subordinating conjunctions or auxiliary verbs). 
+      Particles may encode grammatical categories such as negation, mood, tense etc. Particles are normally not inflected, although exceptions may occur.<br/>
+
+      Note that the PART tag does not cover so-called verbal particles in Germanic languages, as in give in or end up. 
+      These are adpositions or adverbs by origin and are tagged accordingly ADP or ADV. Separable verb prefixes in German are treated analogically.<br/>
+
+      Note that not all function words that are traditionally called particles in Japanese automatically qualify for the PART tag. 
+      Some of them do, e.g. the question particle か / ka. Others (e.g. に / ni, の / no) are parallel to adpositions in other languages and should thus be tagged ADP.<br/>
+
+      In general, the PART tag should be used restrictively and only when no other tag is possible. 
+      The the language-specific documentation should list the words classified as PART in the given language.
+    </Definition>
+  );
+};
+
+const PronDef = () => {
+  return (
+    <Definition>
+      Pronouns are words that substitute for nouns or noun phrases, whose meaning is recoverable from the linguistic or extralinguistic context.<br/>
+
+      Pronouns under this definition function like nouns. Note that some languages traditionally extend the term pronoun to words that substitute for adjectives. 
+      Such words are not tagged PRON under our universal scheme. They are tagged as determiners in order to annotate the same thing the same way across languages.<br/>
+
+      It is not always crystal clear where pronouns end and determiners start. Unlike in UD v1 it is no longer required that they are told apart solely on the base of the context. 
+      The words can be pre-classified in the dictionary as either PRON or DET, based on their typical syntactic distribution (and morphology, when applicable). 
+      Language-specific documentation should list all pronouns (it is a closed class) and point out ambiguities, if any.
+    </Definition>
+  );
+};
+
+const PropnDef = () => {
+  return (
+    <Definition>
+      A proper noun is a noun (or nominal content word) that is the name (or part of the name) of a specific individual, place, or object.<br/>
+
+      Note that PROPN is only used for the subclass of nouns that are used as names and that often exhibit special syntactic properties 
+      (such as occurring without an article in the singular in English). When other phrases or sentences are used as names, 
+      the component words retain their original tags. For example, in Cat on a Hot Tin Roof, Cat is NOUN, on is ADP, a is DET, etc.<br/>
+
+      A fine point is that it is not uncommon to regard words that are etymologically adjectives or participles as proper nouns when 
+      they appear as part of a multiword name that overall functions like a proper noun, for example in the Yellow Pages, United Airlines or 
+      Thrall Manufacturing Company. This is certainly the practice for the English Penn Treebank tag set. However, the practice should not be 
+      copied from English to other languages if it is not linguistically justified there. For example, in Czech, Spojené státy “United States” is 
+      an adjective followed by a common noun; their tags in UD are ADJ NOUN and the adjective modifies the noun via the amod relation.<br/>
+
+      Acronyms of proper nouns, such as UN and NATO, should be tagged PROPN. Even if they contain numbers (as in various product names), 
+      they are tagged PROPN and not SYM: 130XE, DC10, DC-10. However, if the token consists entirely of digits (like 7 in Windows 7), it is tagged NUM.
+    </Definition>
+  );
+};
+
+const PunctDef = () => {
+  return (
+    <Definition>
+      Punctuation marks are non-alphabetical characters and character groups used in many languages to delimit linguistic units in printed text.<br/>
+
+      Punctuation is not taken to include logograms such as $, %, and §, which are instead tagged as SYM. 
+      (Hint: if it corresponds to a word that you pronounce, such as dollar or percent, it is SYM and not PUNCT.)<br/>
+
+      Spoken corpora contain symbols representing pauses, laughter and other sounds; we treat them as punctuation, too. 
+      In these cases it is even not required that all characters of the token are non-alphabetical. 
+      One can represent a pause using a special character such as #, or using some more descriptive coding such as [:pause].
+    </Definition>
+  );
+};
+
+const SconjDef = () => {
+  return (
+    <Definition>
+      A subordinating conjunction is a conjunction that links constructions by making one of them a constituent of the other. 
+      The subordinating conjunction typically marks the incorporated constituent which has the status of a (subordinate) clause.
+    </Definition>
+  );
+};
+
+const SymDef = () => {
+  return (
+    <Definition>
+      A symbol is a word-like entity that differs from ordinary words by form, function, or both.<br/>
+
+      Many symbols are or contain special non-alphanumeric characters, similarly to punctuation. 
+      What makes them different from punctuation is that they can be substituted by normal words. 
+      This involves all currency symbols, e.g. $ 75 is identical to seventy-five dollars.<br/>
+
+      Mathematical operators form another group of symbols.<br/>
+
+      Another group of symbols is emoticons and emoji.
+    </Definition>
+  );
+};
+
+const VerbDef = () => {
+  return (
+    <Definition>
+      A verb is a member of the syntactic class of words that typically signal events and actions, 
+      can constitute a minimal predicate in a clause, and govern the number and types of other constituents which may occur in the clause. 
+      Verbs are often associated with grammatical categories like tense, mood, aspect and voice, 
+      which can either be expressed inflectionally or using auxilliary verbs or particles.<br/>
+
+      Note that the VERB tag covers main verbs (content verbs) but it does not cover auxiliary verbs and verbal copulas 
+      (in the narrow sense), for which there is the AUX tag. Modal verbs may be considered VERB or AUX, depending on their behavior in the given language. 
+      Language-specific documentation should specify which verbs are tagged AUX in which contexts.
+    </Definition>
+  );
+};
+
+const XDef = () => {
+  return (
+    <Definition>
+      The tag X is used for words that for some reason cannot be assigned a real part-of-speech category. It should be used very restrictively.<br/>
+
+      A special usage of X is for cases of code-switching where it is not possible (or meaningful) to analyze the intervening language grammatically 
+      (and where the dependency relation flat:foreign is typically used in the syntactic analysis). 
+      This usage does not extend to ordinary loan words which should be assigned a normal part-of-speech. 
+      For example, in he put on a large sombrero, sombrero is an ordinary NOUN.
+    </Definition>
+  );
+};
+
+const tagMap = new Map<string, ReactElement>();
+tagMap.set('Adjective', <AdjDef/>);
+tagMap.set('Adposition', <AdpDef/>);
+tagMap.set('Adverb', <AdvDef/>);
+tagMap.set('Auxillary', <AuxDef/>);
+tagMap.set('Coordinating conjunction', <CconjDef/>);
+tagMap.set('Determiner', <DetDef/>);
+tagMap.set('Interjection', <IntjDef/>);
+tagMap.set('Noun', <NounDef/>);
+tagMap.set('Numeral', <NumDef/>);
+tagMap.set('Particle', <PartDef/>);
+tagMap.set('Pronoun', <PronDef/>);
+tagMap.set('Proper noun', <PropnDef/>);
+tagMap.set('Punctuation', <PunctDef/>);
+tagMap.set('Subordinating conjunction', <SconjDef/>);
+tagMap.set('Symbol', <SymDef/>);
+tagMap.set('Verb', <VerbDef/>);
+tagMap.set('Other', <XDef/>);
+
 
 export default Home;
