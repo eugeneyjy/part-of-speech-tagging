@@ -1,7 +1,11 @@
 import React, { Component, ReactElement } from 'react';
-import Head from 'next/head'
-import styled from 'styled-components'
+import Head from 'next/head';
+import styled from 'styled-components';
+import { tagColors } from '@/styles/color-theme';
 
+interface tagSpan {
+  name: string
+}
 
 const Home = () => {
   const [tagName, setTagName] = React.useState<string>('Adjective');
@@ -30,23 +34,23 @@ const Home = () => {
           <TextInput defaultValue={introText}/>
           <InfoContainer>
             <TagsContainer>
-              <Tag onClick={switchDefinition}>Adjective</Tag>
-              <Tag onClick={switchDefinition}>Adposition</Tag>
-              <Tag onClick={switchDefinition}>Adverb</Tag>
-              <Tag onClick={switchDefinition}>Auxillary</Tag>
-              <Tag onClick={switchDefinition}>Coordinating conjunction</Tag>
-              <Tag onClick={switchDefinition}>Determiner</Tag>
-              <Tag onClick={switchDefinition}>Interjection</Tag>
-              <Tag onClick={switchDefinition}>Noun</Tag>
-              <Tag onClick={switchDefinition}>Numeral</Tag>
-              <Tag onClick={switchDefinition}>Particle</Tag>
-              <Tag onClick={switchDefinition}>Pronoun</Tag>
-              <Tag onClick={switchDefinition}>Proper noun</Tag>
-              <Tag onClick={switchDefinition}>Punctuation</Tag>
-              <Tag onClick={switchDefinition}>Subordinating conjunction</Tag>
-              <Tag onClick={switchDefinition}>Symbol</Tag>
-              <Tag onClick={switchDefinition}>Verb</Tag>
-              <Tag onClick={switchDefinition}>Other</Tag>
+              <Tag onClick={switchDefinition} name='adj'>Adjective</Tag>
+              <Tag onClick={switchDefinition} name='adp'>Adposition</Tag>
+              <Tag onClick={switchDefinition} name='adv'>Adverb</Tag>
+              <Tag onClick={switchDefinition} name='aux'>Auxillary</Tag>
+              <Tag onClick={switchDefinition} name='cconj'>Coordinating conjunction</Tag>
+              <Tag onClick={switchDefinition} name='det'>Determiner</Tag>
+              <Tag onClick={switchDefinition} name='intj'>Interjection</Tag>
+              <Tag onClick={switchDefinition} name='noun'>Noun</Tag>
+              <Tag onClick={switchDefinition} name='num'>Numeral</Tag>
+              <Tag onClick={switchDefinition} name='part'>Particle</Tag>
+              <Tag onClick={switchDefinition} name='pron'>Pronoun</Tag>
+              <Tag onClick={switchDefinition} name='propn'>Proper noun</Tag>
+              <Tag onClick={switchDefinition} name='punc'>Punctuation</Tag>
+              <Tag onClick={switchDefinition} name='sconj'>Subordinating conjunction</Tag>
+              <Tag onClick={switchDefinition} name='sym'>Symbol</Tag>
+              <Tag onClick={switchDefinition} name='verb'>Verb</Tag>
+              <Tag onClick={switchDefinition} name='other'>Other</Tag>
             </TagsContainer>
             <DefinitionContainer>
               <DefinitionTitle>
@@ -112,12 +116,13 @@ const TagsContainer = styled.div`
   padding: 20px 0;
 `;
 
-const Tag = styled.span`
+const Tag = styled.span<tagSpan>`
   font-family: 'Bitter';
   padding: 3px 10px;
-  background-color: red;
+  background-color: ${props => tagColors[props.name]};
   height: fit-content;
   cursor: pointer;
+  user-select: none;
 `;
 
 const DefinitionContainer = styled.div`
@@ -139,12 +144,13 @@ Enter sentences right in here and they will be color coded with their respective
 Check below for the definition of each tags.`;
 
 const AdjDef = () => {
+  const name = 'adj';
   return(
     <Definition>
       Adjectives are words that typically modify nouns and specify their properties or attributes:<br/>
-      The <Tag>oldest</Tag> French bridge<br/>
+      The <Tag name={name}>oldest</Tag> French bridge<br/>
       They may also function as predicates, as in:<br/>
-      The car is <Tag>green</Tag>.<br/>
+      The car is <Tag name={name}>green</Tag>.<br/>
       Some words that could be seen as adjectives (and are tagged as such in other annotation schemes) have a different tag in Universal Dependencies (UD): 
       See Determiner and Numeral.<br/>
       Adjective is also used for “proper adjectives” such as European (“proper” as in proper nouns, i.e., words that are derived from names but are adjectives rather than nouns).<br/>
