@@ -3,7 +3,7 @@ import Head from 'next/head';
 import styled from 'styled-components';
 import { tagColors } from '@/styles/color-theme';
 
-interface TagSpan {
+interface TagType {
   name: string
 }
 
@@ -11,8 +11,22 @@ interface DefProps {
   TagClickHandler: (event: React.MouseEvent<HTMLSpanElement>) => void
 }
 
+type PredictData = {
+  tokens: Array<string>,
+  tags: Array<string>
+}
+
+const fakePredictData: PredictData = {
+  tokens: ['this', 'is', 'a', 'part-of-speech', '(', 'pos', ')', 'tagger', 'trained', 'using', 'bi-lstm', 'model', '.', 'enter', 'sentences', 'right', 'in', 'here', 'and', 'they', 'will', 'be', 'color', 'coded', 'with', 'their', 'respective', 'pos', 'tag', 'in', 'real', 'time', '.', 'check', 'below', 'for', 'the', 'definition', 'of', 'each', 'tags', '.'],
+  tags: ['PRON', 'AUX', 'DET', 'NOUN', 'PUNCT', 'NOUN', 'PUNCT', 'PROPN', 'VERB', 'VERB', 'NOUN', 'NOUN', 'PUNCT', 'VERB', 'NOUN', 'ADV', 'ADP', 'ADV', 'CCONJ', 'PRON', 'AUX', 'AUX', 'VERB', 'NOUN', 'ADP', 'PRON', 'ADJ', 'NOUN', 'NOUN', 'ADP', 'ADJ', 'NOUN', 'PUNCT', 'VERB', 'ADV', 'ADP', 'DET', 'NOUN', 'ADP', 'DET', 'NOUN', 'PUNCT']
+}
+
 const Home = () => {
   const [tagName, setTagName] = React.useState<string>('Adjective');
+  const [inputText, setInputText] = React.useState<string>(`This is a Part-of-speech (POS) tagger trained using Bi-LSTM model. \
+Enter sentences right in here and they will be color coded with their respective POS tag in real time. \
+Check below for the definition of each tags.`);
+  const [backdropText, setbackdropText] = React.useState<ReactElement[]>([]);
 
   const switchDefinition = (event: React.MouseEvent<HTMLSpanElement>) => {
     event.preventDefault();
@@ -21,6 +35,39 @@ const Home = () => {
     let validatedName: string = typeof name === 'string' ?  name : '';
     setTagName(validatedName);
   };
+
+  const updateInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    event.preventDefault();
+    console.log(event.currentTarget.value);
+    setInputText(event.currentTarget.value);
+  }
+
+  const populateHighlight = (input:string, predictData: PredictData) => {
+    let highlightedText:ReactElement[] = [];
+    let currIdx = 0;
+    let currTagIdx = 0;
+    while (currIdx < input.length) {
+      if (input[currIdx] === ' ') {
+        highlightedText.push(<React.Fragment key={currIdx}>&nbsp;</React.Fragment>);
+        currIdx += 1;
+      } else if (input[currIdx] === '\n'){
+        highlightedText.push(<React.Fragment key={currIdx}><br/></React.Fragment>);
+        currIdx += 1;
+      } else {
+        let tokenLen = predictData.tokens[currTagIdx].length;
+        let token = input.slice(currIdx, currIdx+tokenLen);
+        const tag = <TagMark key={currIdx} name={predictData.tags[currTagIdx].toLowerCase()}>{token}</TagMark>;
+        highlightedText.push(tag);
+        currIdx += tokenLen;
+        currTagIdx += 1;
+      }
+    }
+    setbackdropText(highlightedText);
+  }
+
+  React.useEffect(() => {
+    populateHighlight(inputText, fakePredictData);
+  }, [inputText]);
 
   const tagMap = new Map<string, ReactElement>();
   tagMap.set('Adjective', <AdjDef TagClickHandler={switchDefinition}/>);
@@ -54,7 +101,12 @@ const Home = () => {
             Part-Of-Speech Tagger
         </Title>
         <ContentContainer>
-          <TextInput defaultValue={introText}/>
+          <InputContainer>
+            <HighlightContainer>
+              {backdropText}
+            </HighlightContainer>
+            <TextInput value={inputText} onChange={updateInput}/>
+          </InputContainer>
           <InfoContainer>
             <TagsContainer>
               <Tag onClick={switchDefinition} name='adj'>Adjective</Tag>
@@ -114,14 +166,37 @@ const ContentContainer = styled.div`
   height: 100%;
 `;
 
-const TextInput = styled.textarea`
-  font-family: 'Open Sans';
-  font-size: 1em;
+const InputContainer = styled.div`
+  position: relative;
   width: 100%;
   height: 40%;
   min-height: 250px;
+`;
+
+const TextInput = styled.textarea`
+  position: absolute;
+  font-family: 'Open Sans';
+  font-size: 1em;
+  background-color: transparent;
+  word-break: break-word;
+  width: 100%;
+  height: 100%;
   padding: 20px;
   line-height: 1.6;
+  resize: none;
+`;
+
+const HighlightContainer = styled.div`
+  position: absolute;
+  font-family: 'Open Sans';
+  font-size: 1em;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow: auto;
   resize: none;
 `;
 
@@ -139,7 +214,7 @@ const TagsContainer = styled.div`
   padding: 20px 0;
 `;
 
-const Tag = styled.span<TagSpan>`
+const Tag = styled.span<TagType>`
   font-family: 'Bitter';
   padding: 3px 10px;
   background-color: ${props => tagColors[props.name]};
@@ -147,6 +222,13 @@ const Tag = styled.span<TagSpan>`
   cursor: pointer;
   user-select: none;
 `;
+
+const TagMark = styled.mark<TagType>`
+  position: 'absolute';
+  color: transparent;
+  white-space: nowrap;
+  background-color ${props => tagColors[props.name]};
+`
 
 const DefinitionContainer = styled.div`
   display: flex;
@@ -162,9 +244,6 @@ const Definition = styled.div`
   white-space: pre-line;
 `;
 
-const introText = `This a Part-of-speech (POS) tagger trained using Bi-LSTM model. \
-Enter sentences right in here and they will be color coded with their respective POS tag in real time. \
-Check below for the definition of each tags.`;
 
 const AdjDef: FC<DefProps> = (props) => {
   const name = 'adj';
