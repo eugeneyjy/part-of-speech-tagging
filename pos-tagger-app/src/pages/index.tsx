@@ -39,35 +39,52 @@ Check below for the definition of each tags.`);
   const updateInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
     let input = event.currentTarget.value
-    // let input: string = typeof event.currentTarget.textContent === 'string' ? event.currentTarget.textContent : '';
     setInputText(input);
   }
 
   const populateHighlight = (input:string, predictData: PredictData) => {
     let highlightedText:ReactElement[] = [];
-    let currIdx = 0;
-    let currTagIdx = 0;
-    while (currIdx < input.length) {
-      if (input[currIdx] === ' ') {
-        highlightedText.push(<React.Fragment key={currIdx}> </React.Fragment>);
-        currIdx += 1;
-      } else if (input[currIdx] === '\n'){
-        highlightedText.push(<React.Fragment key={currIdx}><br/></React.Fragment>);
-        currIdx += 1;
-      } else {
-        let tokenLen = predictData.tokens[currTagIdx].length;
-        let token = input.slice(currIdx, currIdx+tokenLen);
-        const tag = <TagMark key={currIdx} name={predictData.tags[currTagIdx].toLowerCase()}>{token}</TagMark>;
-        highlightedText.push(tag);
-        currIdx += tokenLen;
-        currTagIdx += 1;
+    if (predictData.tags.length > 0 && predictData.tokens.length > 0) {
+      let currIdx = 0;
+      let currTagIdx = 0;
+      while (currIdx < input.length) {
+        if (input[currIdx] === ' ') {
+          highlightedText.push(<React.Fragment key={currIdx}> </React.Fragment>);
+          currIdx += 1;
+        } else if (input[currIdx] === '\n'){
+          highlightedText.push(<React.Fragment key={currIdx}><br/></React.Fragment>);
+          currIdx += 1;
+        } else {
+          let tokenLen = predictData.tokens[currTagIdx].length;
+          let token = input.slice(currIdx, currIdx+tokenLen);
+          const tag = <TagMark key={currIdx} name={predictData.tags[currTagIdx].toLowerCase()}>{token}</TagMark>;
+          highlightedText.push(tag);
+          currIdx += tokenLen;
+          currTagIdx += 1;
+        }
       }
     }
     setbackdropText(highlightedText);
   }
 
   React.useEffect(() => {
-    populateHighlight(inputText, fakePredictData);
+    const requestOptions = {
+      method: 'POST',
+      body: JSON.stringify({"sentence": inputText}),
+      headers: {"Content-Type": "application/json"}
+    }
+    fetch(`http://localhost:5000/tag`, requestOptions)
+      .then((res) => {
+        if (res.status == 200) {
+          res.json().then(data => {
+            let predictData: PredictData = {
+              tokens: data.tokens,
+              tags: data.tags
+            };
+            populateHighlight(inputText, predictData);
+          })
+        }
+      });
   }, [inputText]);
 
   const tagMap = new Map<string, ReactElement>();
@@ -245,6 +262,7 @@ const Tag = styled.span<TagType>`
 
 const TagMark = styled.mark<TagType>`
   position: 'absolute';
+  color: transparent;
   background-color ${props => tagColors[props.name]};
 `
 

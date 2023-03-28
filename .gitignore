@@ -1,3 +1,6 @@
 .data
 .vector_cache
+__pycache__
+
 model
+backend/models

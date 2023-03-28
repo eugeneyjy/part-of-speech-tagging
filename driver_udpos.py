@@ -52,11 +52,12 @@ def main():
 
     model = PosBiLSTM(len(train_data.tag_field.vocab), embeddings, text_pad_idx)
     model.to(dev)
-    best_model = torch.load(f"{model_dir}/best_model.pt") if os.path.exists(f"{model_dir}/best_model.pt") else None
-    # best_model = None
-    if best_model:
+    best_model = PosBiLSTM(len(train_data.tag_field.vocab), embeddings, text_pad_idx)
+    best_model_loss = float('inf')
+    if os.path.exists(f"{model_dir}/best_model.pth"):
+        best_model.load_state_dict(torch.load(f"{model_dir}/best_model.pth"))
         best_model.to(dev)
-    best_model_loss, _ = validation_metrics(best_model, val_loader) if best_model else (float('inf'), -1)
+        best_model_loss, _ = validation_metrics(best_model, val_loader)
     logging.info("Best Model Loss %.3f" %(best_model_loss))
     _, test_acc = validation_metrics(best_model, test_loader) if best_model else (None, None)
     print(test_acc)
@@ -254,7 +255,7 @@ def plot_loss(plots):
 def save_model(model, 
                text_field, 
                tag_field, 
-               model_path='best_model.pt', 
+               model_path='best_model.pth', 
                text_field_path='best_text_field.pkl', 
                tag_field_path='best_tag_field.pkl'):
     try:
@@ -265,7 +266,7 @@ def save_model(model,
     tag_field_out = open(f"{model_dir}/{tag_field_path}", 'wb')
     pickle.dump(f"{model_dir}/{text_field}", text_field_out)
     pickle.dump(f"{model_dir}/{tag_field}", tag_field_out)
-    torch.save(model, f"{model_dir}/{model_path}")
+    torch.save(model.state_dict(), f"{model_dir}/{model_path}")
 
 
 def tag_sentence(sentence, model, text_field, tag_field):
