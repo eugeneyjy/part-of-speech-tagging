@@ -38,8 +38,9 @@ Check below for the definition of each tags.`);
 
   const updateInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     event.preventDefault();
-    console.log(event.currentTarget.value);
-    setInputText(event.currentTarget.value);
+    let input = event.currentTarget.value
+    // let input: string = typeof event.currentTarget.textContent === 'string' ? event.currentTarget.textContent : '';
+    setInputText(input);
   }
 
   const populateHighlight = (input:string, predictData: PredictData) => {
@@ -48,7 +49,7 @@ Check below for the definition of each tags.`);
     let currTagIdx = 0;
     while (currIdx < input.length) {
       if (input[currIdx] === ' ') {
-        highlightedText.push(<React.Fragment key={currIdx}>&nbsp;</React.Fragment>);
+        highlightedText.push(<React.Fragment key={currIdx}> </React.Fragment>);
         currIdx += 1;
       } else if (input[currIdx] === '\n'){
         highlightedText.push(<React.Fragment key={currIdx}><br/></React.Fragment>);
@@ -102,9 +103,11 @@ Check below for the definition of each tags.`);
         </Title>
         <ContentContainer>
           <InputContainer>
-            <HighlightContainer>
-              {backdropText}
-            </HighlightContainer>
+            <BackdropContainer>
+              <HighlightContainer>
+                {backdropText}
+              </HighlightContainer>
+            </BackdropContainer>
             <TextInput value={inputText} onChange={updateInput}/>
           </InputContainer>
           <InfoContainer>
@@ -171,32 +174,49 @@ const InputContainer = styled.div`
   width: 100%;
   height: 40%;
   min-height: 250px;
+  margin: 0 auto;
+`;
+
+const BackdropContainer = styled.div`
+  position: absolute;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border: 2px solid #685972;
+  background-color: #fff;
+  overflow: auto;
 `;
 
 const TextInput = styled.textarea`
   position: absolute;
+  z-index: 2;
   font-family: 'Open Sans';
-  font-size: 1em;
-  background-color: transparent;
-  word-break: break-word;
+  font-size: 1.1em;
   width: 100%;
   height: 100%;
+  white-space: pre-wrap;
+	word-wrap: break-word;
+  margin: 0;
+  border: 2px solid #685972;
+  background-color: transparent;
+  overflow: auto;
   padding: 20px;
   line-height: 1.6;
   resize: none;
+  &:focus {
+    outline: none;
+    box-shadow: 0px 0px 2px purple;
+}
 `;
 
 const HighlightContainer = styled.div`
-  position: absolute;
   font-family: 'Open Sans';
-  font-size: 1em;
-  width: 100%;
-  height: 100%;
+  font-size: 1.1em;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	color: transparent;
   padding: 20px;
   line-height: 1.6;
-  word-wrap: break-word;
-  word-break: break-word;
-  overflow: auto;
   resize: none;
 `;
 
@@ -225,8 +245,6 @@ const Tag = styled.span<TagType>`
 
 const TagMark = styled.mark<TagType>`
   position: 'absolute';
-  color: transparent;
-  white-space: nowrap;
   background-color ${props => tagColors[props.name]};
 `
 
